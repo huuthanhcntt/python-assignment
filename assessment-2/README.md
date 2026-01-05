@@ -7,8 +7,8 @@
     - DI System: Mapping Laravel's Service Container to [FastAPI's Depends](https://fastapi.tiangolo.com/tutorial/dependencies/%5D(https://fastapi.tiangolo.com/tutorial/dependencies/)).
     - Data Validation: Using [Pydantic v2](https://docs.pydantic.dev/latest/) for strict schema enforcement (replaces FormRequests).
  - **Assessment 2**:
-        - Task: Create a FastAPI middleware that logs request execution time and a protected route that uses a custom DI provider for multi-tenant database switching. Create a simple student management system
-        - Reference: [FastAPI "To async or not to async"](https://fastapi.tiangolo.com/async/)
+    - Task: Create a FastAPI middleware that logs request execution time and a protected route that uses a custom DI provider for multi-tenant database switching. Create a simple student management system
+    - Reference: [FastAPI "To async or not to async"](https://fastapi.tiangolo.com/async/)
 
 ## 📄 Assessment 2 — Simple Movie Manager
 
@@ -18,9 +18,19 @@ Files:
 - `models.py` — dataclass `Movie`
 - `data_loader.py` — CSV -> `Movie` loader
 - `app.py` — FastAPI app with endpoints:
-    - `GET /movies` — list movies (optional `limit`, `genre`, `year` query params)
-    - `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID
-    - `POST /reload` — reload CSV (optional `path` body param)
+    - `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year` query params)
+    - `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID (tenant-aware)
+    - `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified.
+    - `GET /tenants` — list available tenants
+    - `POST /tenants` — create an empty tenant
+
+This app supports simple multi-tenant behavior via CSV files placed in `assessment-2/csv/`:
+
+- `movies.csv` → tenant `movies`
+- `tv_serials.csv` → tenant `tv_serials`
+
+Tenant selection
+ - Tenant must be provided for tenant-aware endpoints either using the `X-Tenant` HTTP header or the `tenant` query parameter.
 
 Run locally:
 
@@ -28,5 +38,3 @@ Run locally:
 python3 -m pip install -r requirements.txt
 python3 -m uvicorn app:app --reload --port 8000
 ```
-
-Place your CSV at `assessment-2/csv/movies.csv` or call `/reload` with a path.
