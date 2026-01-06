@@ -10,7 +10,19 @@
     - Task: Create a FastAPI middleware that logs request execution time and a protected route that uses a custom DI provider for multi-tenant database switching. Create a simple student management system
     - Reference: [FastAPI "To async or not to async"](https://fastapi.tiangolo.com/async/)
 
-## 📄 Assessment 2 — Simple Movie Manager
+## 📅 Week 2: SQLAlchemy 2.0 & Postgres (The Persistence)
+- **Goal**: Shift from Active Record (Eloquent) to Data Mapper (SQLAlchemy).
+- **Advanced SQLAlchemy**:
+    - The Unit of Work: Mastering the `AsyncSession` and explicit transaction boundaries (commit/rollback).
+    - N+1 Prevention: Using `selectinload` and `joinedload` (replaces `$user->with('posts')`).
+- **Postgres in 2025**:
+    - Working with JSONB for flexible schemas and GIN indexes.
+    - Database migrations using [Alembic](https://alembic.sqlalchemy.org/en/latest/).
+- **Assessment 3**:
+    - Task: Write a complex query using SQLAlchemy's CTE (Common Table Expressions) to generate a hierarchical report (e.g., categories and subcategories) in a single async request.
+    - Reference: [SQLAlchemy 2.0 Unified Tutorial](https://docs.sqlalchemy.org/en/20/tutorial/index.html)
+
+## 📄 Assessment 2 & 3 — Simple Movie Manager
 
 This folder contains a tiny FastAPI app that loads a movie CSV into memory and exposes simple endpoints to list and fetch movies.
 

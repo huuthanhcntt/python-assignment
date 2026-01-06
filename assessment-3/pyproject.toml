@@ -9,8 +9,15 @@ dependencies = [
   "fastapi>=0.95",
   "python-multipart>=0.0.21",
   "uvicorn[standard]>=0.22",
+  "sqlalchemy>=2.0",
+  "asyncpg>=0.27",
+  "alembic>=1.17.2",
+  "psycopg2-binary>=2.9.11",
 ]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = false
