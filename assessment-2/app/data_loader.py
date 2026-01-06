@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 from typing import List
 
-from models import Movie
+from app.models import Movie
 
 
 def parse_movie_row(row: dict[str, str]) -> Movie:

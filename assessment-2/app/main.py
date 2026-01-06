@@ -7,8 +7,8 @@ import time
 import logging
 import os
 
-from models import Movie
-from data_loader import load_movies_from_csv, parse_movie_row
+from app.models import Movie
+from app.data_loader import load_movies_from_csv, parse_movie_row
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("assessment-2")

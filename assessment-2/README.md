@@ -15,16 +15,16 @@
 This folder contains a tiny FastAPI app that loads a movie CSV into memory and exposes simple endpoints to list and fetch movies.
 
 Files:
-- `models.py` — dataclass `Movie`
-- `data_loader.py` — CSV -> `Movie` loader
-- `app.py` — FastAPI app with endpoints:
+- `app/models.py` — dataclass `Movie`
+- `app/data_loader.py` — CSV -> `Movie` loader
+- `app/main.py` — FastAPI app with endpoints:
     - `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year` query params)
     - `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID (tenant-aware)
     - `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified.
     - `GET /tenants` — list available tenants
     - `POST /tenants` — create an empty tenant
 
-This app supports simple multi-tenant behavior via CSV files placed in `assessment-2/csv/`:
+This app supports simple multi-tenant behavior via CSV files placed in `assessment-2/app/csv/`:
 
 - `movies.csv` → tenant `movies`
 - `tv_serials.csv` → tenant `tv_serials`
@@ -32,9 +32,16 @@ This app supports simple multi-tenant behavior via CSV files placed in `assessme
 Tenant selection
  - Tenant must be provided for tenant-aware endpoints either using the `X-Tenant` HTTP header or the `tenant` query parameter.
 
-Run locally:
+Run locally (two options)
+
+1) Run with `uv` (if you use `uv` launcher):
 
 ```bash
-python3 -m pip install -r requirements.txt
-python3 -m uvicorn app:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+2) Run in Docker:
+
+```bash
+docker compose up
 ```
