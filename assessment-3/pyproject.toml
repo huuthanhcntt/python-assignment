@@ -1,0 +1,16 @@
+[project]
+name = "assessment-2-movie-manager"
+version = "0.1.0"
+description = "Simple FastAPI movie manager used in Assessment 2"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+  "fastapi>=0.95",
+  "python-multipart>=0.0.21",
+  "uvicorn[standard]>=0.22",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
