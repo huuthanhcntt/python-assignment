@@ -27,7 +27,12 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("tenant", sa.String(length=64), nullable=False),
         sa.Column("tmdb_id", sa.String(length=128), nullable=True),
-        sa.Column("data", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "data",
+            postgresql.JSONB(),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb")
+        ),
     )
 
     # create indexes: tenant, tmdb_id, and a GIN index on the JSONB payload

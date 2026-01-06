@@ -1,15 +1,3 @@
-## 📅 Week 1.2: AsyncIO & FastAPI (The Engine)
-- **Goal**: Master the "Event Loop" and move away from the PHP mentality.
-- **AsyncIO Deep Dive**:
-    - Coroutines (`async def`) vs. Tasks (`asyncio.create_task`).
-    - Avoiding blocking calls (e.g., never use `time.sleep()` in FastAPI).
-- **FastAPI Framework**:
-    - DI System: Mapping Laravel's Service Container to [FastAPI's Depends](https://fastapi.tiangolo.com/tutorial/dependencies/%5D(https://fastapi.tiangolo.com/tutorial/dependencies/)).
-    - Data Validation: Using [Pydantic v2](https://docs.pydantic.dev/latest/) for strict schema enforcement (replaces FormRequests).
- - **Assessment 2**:
-    - Task: Create a FastAPI middleware that logs request execution time and a protected route that uses a custom DI provider for multi-tenant database switching. Create a simple student management system
-    - Reference: [FastAPI "To async or not to async"](https://fastapi.tiangolo.com/async/)
-
 ## 📅 Week 2: SQLAlchemy 2.0 & Postgres (The Persistence)
 - **Goal**: Shift from Active Record (Eloquent) to Data Mapper (SQLAlchemy).
 - **Advanced SQLAlchemy**:
@@ -22,24 +10,33 @@
     - Task: Write a complex query using SQLAlchemy's CTE (Common Table Expressions) to generate a hierarchical report (e.g., categories and subcategories) in a single async request.
     - Reference: [SQLAlchemy 2.0 Unified Tutorial](https://docs.sqlalchemy.org/en/20/tutorial/index.html)
 
-## 📄 Assessment 2 & 3 — Simple Movie Manager
+## 📄 Assessment 3 — Simple Movie Manager
 
-This folder contains a tiny FastAPI app that loads a movie CSV into memory and exposes simple endpoints to list and fetch movies.
+This folder contains a FastAPI app with a layered architecture (API → Service → Repository → Database) that stores movies in PostgreSQL and exposes endpoints to list, fetch, and reload movies.
 
-Files:
+### Architecture
+
+**Layered structure:**
 - `app/models.py` — dataclass `Movie`
-- `app/data_loader.py` — CSV -> `Movie` loader
-- `app/main.py` — FastAPI app with endpoints:
-    - `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year` query params)
-    - `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID (tenant-aware)
-    - `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified.
-    - `GET /tenants` — list available tenants
-    - `POST /tenants` — create an empty tenant
+- `app/data_loader.py` — CSV parser
+- `app/main.py` — FastAPI app initialization and middleware
+- `app/api/movies.py` — Route handlers (API layer)
+- `app/services/movie_service.py` — Business logic (Service layer)
+- `app/repositories/movie_repo.py` — Database access (Repository layer)
+- `app/db/` — Database models and session management
+  - `base.py` — SQLAlchemy Base declarative
+  - `session.py` — Async engine, session maker, and transaction management
+  - `models/movie.py` — MovieORM model with JSONB data column
 
-This app supports simple multi-tenant behavior via CSV files placed in `assessment-2/app/csv/`:
+**API Endpoints:**
+- `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year` query params)
+- `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID (tenant-aware)
+- `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified.
+- `GET /tenants` — list available tenants
 
-- `movies.csv` → tenant `movies`
-- `tv_serials.csv` → tenant `tv_serials`
+**Multi-tenant support:**
+- Movies are stored in PostgreSQL with a `tenant` column for isolation
+- Filtering and queries are tenant-aware via the repository layer
 
 Tenant selection
  - Tenant must be provided for tenant-aware endpoints either using the `X-Tenant` HTTP header or the `tenant` query parameter.
@@ -55,5 +52,17 @@ uv run uvicorn app.main:app --reload --port 8000
 2) Run in Docker:
 
 ```bash
-docker compose up
+docker compose up api
+```
+
+Run alembic migration
+
+```bash
+# Upgrade
+docker compose up migrate
+
+# Downgrade
+docker compose run --rm migrate uv run alembic downgrade -1
+# Or
+docker compose run --rm migrate uv run alembic downgrade base
 ```

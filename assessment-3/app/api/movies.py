@@ -1,0 +1,104 @@
+from pathlib import Path
+from typing import List, Optional
+
+from fastapi import APIRouter, HTTPException, Query, Header, Depends, UploadFile, File
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_db
+from app.repositories import MovieRepository
+from app.services import MovieService
+
+router = APIRouter()
+
+
+def get_movie_service(session: AsyncSession = Depends(get_db)) -> MovieService:
+    """Dependency to get MovieService instance."""
+    repo = MovieRepository(session)
+    return MovieService(repo)
+
+
+def get_tenant_from_request(
+    tenant: Optional[str] = Query(None),
+    x_tenant: Optional[str] = Header(None),
+) -> str:
+    """Extract tenant from request (header takes priority over query param)."""
+    if not x_tenant and not tenant:
+        raise HTTPException(
+            status_code=400,
+            detail="Tenant must be provided via X-Tenant header or tenant query parameter",
+        )
+    return x_tenant or tenant
+
+
+@router.get("/movies", response_model=List[dict])
+async def get_movies(
+    limit: Optional[int] = Query(None, ge=1),
+    genre: Optional[str] = None,
+    year: Optional[int] = None,
+    tenant: str = Depends(get_tenant_from_request),
+    service: MovieService = Depends(get_movie_service),
+):
+    """Get movies with optional filters."""
+    # Check if tenant exists
+    if not await service.tenant_exists(tenant):
+        raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant}")
+
+    movies = await service.get_movies(tenant, limit, genre, year)
+    return movies
+
+
+@router.get("/movies/{tmdb_id}")
+async def get_movie(
+    tmdb_id: str,
+    tenant: str = Depends(get_tenant_from_request),
+    service: MovieService = Depends(get_movie_service),
+):
+    """Get a single movie by TMDB ID."""
+    movie = await service.get_movie_by_tmdb_id(tenant, tmdb_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    return movie
+
+
+@router.post("/reload")
+async def reload_csv(
+    tenant: str,
+    file: Optional[UploadFile] = File(None),
+    service: MovieService = Depends(get_movie_service),
+):
+    """Reload movies from CSV file for a specific tenant."""
+    # Check if tenant exists (for file upload case)
+    if file is not None:
+        # Parse uploaded file
+        content = await file.read()
+        try:
+            text = content.decode("utf-8")
+        except Exception:
+            raise HTTPException(
+                status_code=400, detail="Uploaded file must be UTF-8 encoded CSV"
+            )
+
+        try:
+            count = await service.reload_from_csv_content(tenant, text)
+        except ValueError as ve:
+            raise HTTPException(status_code=400, detail=f"Invalid CSV: {ve}")
+
+        return {"loaded": count, "tenant": tenant}
+
+    # No upload — load from default tenant csv file
+    csv_path = Path(__file__).parent.parent / "csv" / f"{tenant}.csv"
+    if not csv_path.exists():
+        raise HTTPException(status_code=404, detail=f"CSV not found: {csv_path}")
+
+    try:
+        count = await service.reload_from_csv_file(tenant, csv_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to load CSV: {e}")
+
+    return {"loaded": count, "tenant": tenant}
+
+
+@router.get("/tenants", response_model=List[str])
+async def list_tenants(service: MovieService = Depends(get_movie_service)):
+    """Get list of all tenants."""
+    return await service.get_all_tenants()
