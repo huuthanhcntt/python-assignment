@@ -3,8 +3,8 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import MovieORM
-from app.models import Movie
+from app.db.models import Movie
+from app.dto import MovieDTO
 
 
 class MovieRepository:
@@ -13,10 +13,10 @@ class MovieRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    def _orm_to_movie(self, orm: MovieORM) -> Movie:
-        """Convert MovieORM to Movie dataclass."""
+    def _orm_to_movie(self, orm: Movie) -> MovieDTO:
+        """Convert Movie ORM to MovieDTO dataclass."""
         data = orm.data or {}
-        return Movie(
+        return MovieDTO(
             movie_name=data.get("movie_name", ""),
             movie_link=data.get("movie_link", ""),
             fshare_link=data.get("fshare_link", ""),
@@ -29,13 +29,15 @@ class MovieRepository:
             poster_url=data.get("poster_url", ""),
             backdrop_url=data.get("backdrop_url", ""),
             tmdb_id=orm.tmdb_id or "",
+            category_id=orm.category_id,
         )
 
-    def _movie_to_orm(self, movie: Movie, tenant: str) -> MovieORM:
-        """Convert Movie dataclass to MovieORM."""
-        return MovieORM(
+    def _movie_to_orm(self, movie: MovieDTO, tenant: str) -> Movie:
+        """Convert MovieDTO dataclass to Movie ORM."""
+        return Movie(
             tenant=tenant,
             tmdb_id=movie.tmdb_id,
+            category_id=movie.category_id,
             data={
                 "movie_name": movie.movie_name,
                 "movie_link": movie.movie_link,
@@ -57,18 +59,18 @@ class MovieRepository:
         limit: Optional[int] = None,
         genre: Optional[str] = None,
         year: Optional[int] = None,
-    ) -> List[Movie]:
+    ) -> List[MovieDTO]:
         """Get movies for a tenant with optional filters."""
-        query = select(MovieORM).where(MovieORM.tenant == tenant)
+        query = select(Movie).where(Movie.tenant == tenant)
 
         # Apply JSONB filters
         if genre:
             query = query.where(
-                MovieORM.data["genre"].astext.ilike(f"%{genre}%")
+                Movie.data["genre"].astext.ilike(f"%{genre}%")
             )
         if year:
             query = query.where(
-                MovieORM.data["year"].astext == str(year)
+                Movie.data["year"].astext == str(year)
             )
 
         if limit:
@@ -80,16 +82,16 @@ class MovieRepository:
 
     async def get_movie_by_tmdb_id(
         self, tenant: str, tmdb_id: str
-    ) -> Optional[Movie]:
+    ) -> Optional[MovieDTO]:
         """Get a single movie by TMDB ID within a tenant."""
-        query = select(MovieORM).where(
-            MovieORM.tenant == tenant, MovieORM.tmdb_id == tmdb_id
+        query = select(Movie).where(
+            Movie.tenant == tenant, Movie.tmdb_id == tmdb_id
         )
         result = await self.session.execute(query)
         orm = result.scalar_one_or_none()
         return self._orm_to_movie(orm) if orm else None
 
-    async def create_movie(self, tenant: str, movie: Movie) -> Movie:
+    async def create_movie(self, tenant: str, movie: MovieDTO) -> MovieDTO:
         """Create a new movie."""
         orm = self._movie_to_orm(movie, tenant)
         self.session.add(orm)
@@ -97,7 +99,7 @@ class MovieRepository:
         await self.session.refresh(orm)
         return self._orm_to_movie(orm)
 
-    async def create_movies_bulk(self, tenant: str, movies: List[Movie]) -> int:
+    async def create_movies_bulk(self, tenant: str, movies: List[MovieDTO]) -> int:
         """Bulk create movies for a tenant."""
         orm_movies = [self._movie_to_orm(movie, tenant) for movie in movies]
         self.session.add_all(orm_movies)
@@ -107,7 +109,7 @@ class MovieRepository:
     async def delete_all_movies(self, tenant: str) -> int:
         """Delete all movies for a tenant."""
         result = await self.session.execute(
-            select(MovieORM).where(MovieORM.tenant == tenant)
+            select(Movie).where(Movie.tenant == tenant)
         )
         movies = result.scalars().all()
         for movie in movies:
@@ -117,12 +119,12 @@ class MovieRepository:
 
     async def tenant_exists(self, tenant: str) -> bool:
         """Check if a tenant has any movies."""
-        query = select(MovieORM).where(MovieORM.tenant == tenant).limit(1)
+        query = select(Movie).where(Movie.tenant == tenant).limit(1)
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
 
     async def get_all_tenants(self) -> List[str]:
         """Get list of all unique tenant names."""
-        query = select(MovieORM.tenant).distinct()
+        query = select(Movie.tenant).distinct()
         result = await self.session.execute(query)
         return list(result.scalars().all())

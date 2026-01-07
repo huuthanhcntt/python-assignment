@@ -17,29 +17,58 @@ This folder contains a FastAPI app with a layered architecture (API → Service 
 ### Architecture
 
 **Layered structure:**
-- `app/models.py` — dataclass `Movie`
+- `app/dto/` — Data Transfer Objects
+  - `movie.py` — MovieDTO dataclass
 - `app/data_loader.py` — CSV parser
 - `app/main.py` — FastAPI app initialization and middleware
 - `app/api/movies.py` — Route handlers (API layer)
-- `app/services/movie_service.py` — Business logic (Service layer)
-- `app/repositories/movie_repo.py` — Database access (Repository layer)
+- `app/services/` — Business logic (Service layer)
+  - `movie_service.py` — Movie business logic
+  - `category_service.py` — Category business logic
+- `app/repositories/` — Database access (Repository layer)
+  - `movie_repo.py` — Movie data access
+  - `category_repo.py` — Category data access with recursive CTE
 - `app/db/` — Database models and session management
   - `base.py` — SQLAlchemy Base declarative
   - `session.py` — Async engine, session maker, and transaction management
-  - `models/movie.py` — MovieORM model with JSONB data column
+  - `models/` — ORM models
+    - `movie.py` — Movie model with JSONB data column
+    - `category.py` — Category model with self-referential hierarchy
 
 **API Endpoints:**
 - `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year` query params)
 - `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID (tenant-aware)
 - `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified.
 - `GET /tenants` — list available tenants
+- `GET /categories?max_level={level}` — get hierarchical categories using recursive CTE (optional `max_level` query param to limit depth, default: unlimited)
 
 **Multi-tenant support:**
 - Movies are stored in PostgreSQL with a `tenant` column for isolation
 - Filtering and queries are tenant-aware via the repository layer
+- Tenant must be provided for movie endpoints either using the `X-Tenant` HTTP header or the `tenant` query parameter
 
-Tenant selection
- - Tenant must be provided for tenant-aware endpoints either using the `X-Tenant` HTTP header or the `tenant` query parameter.
+**Category Hierarchy (Assessment 3 - CTE Implementation):**
+- Categories are stored with self-referential foreign keys (`parent_id`) for hierarchical structure
+- The `/categories` endpoint demonstrates SQLAlchemy's recursive CTE capabilities
+- Returns nested array structure with unlimited depth by default
+- Optional `max_level` parameter to limit hierarchy depth (e.g., `?max_level=3`)
+- Example response structure:
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Action",
+      "subcategories": [
+        {
+          "id": 2,
+          "name": "Thriller",
+          "subcategories": [...]
+        }
+      ]
+    }
+  ]
+  ```
+- Master data includes 25 pre-populated categories across 3 levels (Action, Drama, Comedy, Horror, Sci-Fi, etc.)
 
 Run locally (two options)
 

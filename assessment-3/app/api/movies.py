@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Query, Header, Depends, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
-from app.repositories import MovieRepository
-from app.services import MovieService
+from app.repositories import MovieRepository, CategoryRepository
+from app.services import MovieService, CategoryService
 
 router = APIRouter()
 
@@ -15,6 +15,12 @@ def get_movie_service(session: AsyncSession = Depends(get_db)) -> MovieService:
     """Dependency to get MovieService instance."""
     repo = MovieRepository(session)
     return MovieService(repo)
+
+
+def get_category_service(session: AsyncSession = Depends(get_db)) -> CategoryService:
+    """Dependency to get CategoryService instance."""
+    repo = CategoryRepository(session)
+    return CategoryService(repo)
 
 
 def get_tenant_from_request(
@@ -102,3 +108,42 @@ async def reload_csv(
 async def list_tenants(service: MovieService = Depends(get_movie_service)):
     """Get list of all tenants."""
     return await service.get_all_tenants()
+
+
+@router.get("/categories", response_model=List[dict])
+async def get_categories(
+    max_level: Optional[int] = Query(None, ge=0, description="Maximum hierarchy depth (None = unlimited)"),
+    service: CategoryService = Depends(get_category_service),
+):
+    """
+    Get hierarchical categories using recursive CTE with optional level limit.
+
+    This endpoint demonstrates SQLAlchemy's recursive CTE capabilities.
+    It returns categories in a nested array structure from level 0 (root)
+    and all subcategories.
+
+    Args:
+        max_level: Optional maximum hierarchy depth (None = unlimited, default: None)
+
+    Returns:
+        Nested array of categories with:
+        - id: Category ID
+        - name: Category name
+        - subcategories: Optional array of nested subcategories
+
+    Example response:
+    [
+        {
+            "id": 1,
+            "name": "Action",
+            "subcategories": [
+                {
+                    "id": 2,
+                    "name": "Thriller",
+                    "subcategories": [...]
+                }
+            ]
+        }
+    ]
+    """
+    return await service.get_categories_hierarchy(max_level=max_level)

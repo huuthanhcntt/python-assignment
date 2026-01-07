@@ -1,3 +1,4 @@
-from app.db.models.movie import MovieORM
+from app.db.models.movie import Movie
+from app.db.models.category import Category
 
-__all__ = ["MovieORM"]
+__all__ = ["Movie", "Category"]

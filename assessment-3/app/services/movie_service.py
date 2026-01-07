@@ -3,7 +3,6 @@ import io
 from pathlib import Path
 from typing import List, Optional
 
-from app.models import Movie
 from app.repositories import MovieRepository
 from app.data_loader import parse_movie_row, load_movies_from_csv
 
