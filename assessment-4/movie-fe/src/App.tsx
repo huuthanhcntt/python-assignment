@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Layout, SearchBar, MovieList, ErrorBoundary } from './components';
+import { Layout, SearchBar, FilterBar, MovieList, ErrorBoundary } from './components';
 import { useMovies } from './hooks';
+import { useMovieStore } from './store';
 import './App.css';
 
 function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const filters = { limit: 20 };
+  // Get state and actions from Zustand store
+  const searchTerm = useMovieStore((state) => state.searchTerm);
+  const filters = useMovieStore((state) => state.filters);
+  const setSearchTerm = useMovieStore((state) => state.setSearchTerm);
 
   const { data: movies, isLoading, error } = useMovies(filters);
 
@@ -38,6 +40,8 @@ function App() {
             placeholder="Search by title, original title, or genre..."
             debounceDelay={300}
           />
+
+          <FilterBar />
 
           <MovieList
             movies={filteredMovies || []}
