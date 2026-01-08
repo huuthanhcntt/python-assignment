@@ -5,6 +5,7 @@ export interface GetMoviesParams {
   limit?: number;
   genre?: string;
   year?: number;
+  search?: string;
 }
 
 export const moviesApi = {

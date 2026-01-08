@@ -9,17 +9,10 @@ function App() {
   const filters = useMovieStore((state) => state.filters);
   const setSearchTerm = useMovieStore((state) => state.setSearchTerm);
 
-  const { data: movies, isLoading, error } = useMovies(filters);
-
-  // Filter movies based on search term (client-side filtering)
-  const filteredMovies = movies?.filter((movie) => {
-    if (!searchTerm) return true;
-    const lowerSearch = searchTerm.toLowerCase();
-    return (
-      movie.movie_name.toLowerCase().includes(lowerSearch) ||
-      movie.original_title.toLowerCase().includes(lowerSearch) ||
-      movie.genre.toLowerCase().includes(lowerSearch)
-    );
+  // Pass search term to API - server-side filtering
+  const { data: movies, isLoading, error } = useMovies({
+    ...filters,
+    search: searchTerm || undefined,
   });
 
   const handleSearch = (term: string) => {
@@ -44,7 +37,7 @@ function App() {
           <FilterBar />
 
           <MovieList
-            movies={filteredMovies || []}
+            movies={movies || []}
             isLoading={isLoading}
             error={error}
           />
