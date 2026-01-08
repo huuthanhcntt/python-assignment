@@ -68,8 +68,15 @@ async def get_movie(
 
 @router.post("/reload")
 async def reload_csv(
-    tenant: str,
-    file: Optional[UploadFile] = File(None),
+    tenant: str = Query(
+        ...,
+        description="Target tenant. If no file is provided, available tenants are: `movies`, `tv_serials`, `trending`",
+        example="trending",
+    ),
+    file: Optional[UploadFile] = File(
+        None,
+        description="Optional CSV file. If omitted, the system reloads data for the specified tenant."
+    ),
     service: MovieService = Depends(get_movie_service),
 ):
     """Reload movies from CSV file for a specific tenant."""

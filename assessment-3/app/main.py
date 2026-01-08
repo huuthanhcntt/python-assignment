@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 import time
 import logging
 
@@ -8,6 +9,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("assessment-3")
 
 app = FastAPI(title="Simple Movie Manager")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.middleware("http")
