@@ -36,11 +36,25 @@ This folder contains a FastAPI app with a layered architecture (API → Service 
     - `category.py` — Category model with self-referential hierarchy
 
 **API Endpoints:**
-- `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year` query params)
+
+*Authentication:*
+- `POST /auth/register` — register a new user (body: `{"username": "string", "email": "string", "password": "string"}`)
+- `POST /auth/login` — login and receive JWT token (body: `{"username": "string", "password": "string"}`)
+- `GET /auth/me` — get current authenticated user info (requires Bearer token)
+
+*Movies:*
+- `GET /movies` — list movies (requires tenant via `X-Tenant` header or `tenant` query param; optional `limit`, `genre`, `year`, `search` query params)
 - `GET /movies/{tmdb_id}` — fetch a single movie by TMDB ID (tenant-aware)
-- `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified.
+- `POST /reload` — reload CSV for a tenant; supports multipart upload (`file`) or default tenant CSV file. Tenant must be specified. **Requires authentication.**
 - `GET /tenants` — list available tenants
 - `GET /categories?max_level={level}` — get hierarchical categories using recursive CTE (optional `max_level` query param to limit depth, default: unlimited)
+
+**Authentication & Security:**
+- JWT-based authentication using `python-jose` and `passlib[bcrypt]`
+- Passwords are hashed using bcrypt before storage
+- Access tokens expire after 30 minutes (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`)
+- Protected endpoints require `Authorization: Bearer <token>` header
+- Configure `SECRET_KEY` environment variable in production (default is for development only)
 
 **Multi-tenant support:**
 - Movies are stored in PostgreSQL with a `tenant` column for isolation
@@ -69,6 +83,40 @@ This folder contains a FastAPI app with a layered architecture (API → Service 
   ]
   ```
 - Master data includes 25 pre-populated categories across 3 levels (Action, Drama, Comedy, Horror, Sci-Fi, etc.)
+
+### Usage Examples
+
+**Authentication Flow:**
+
+1. Register a new user:
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "email": "test@example.com", "password": "securepass123"}'
+```
+
+2. Login to get JWT token:
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "password": "securepass123"}'
+```
+
+Response:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+3. Use token to access protected endpoints:
+```bash
+curl -X POST http://localhost:8000/reload?tenant=movies \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### Running the Application
 
 Run locally (two options)
 

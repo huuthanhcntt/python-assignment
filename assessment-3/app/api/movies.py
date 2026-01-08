@@ -5,8 +5,10 @@ from fastapi import APIRouter, HTTPException, Query, Header, Depends, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
+from app.db.models import User
 from app.repositories import MovieRepository, CategoryRepository
 from app.services import MovieService, CategoryService
+from app.auth import get_current_user
 
 router = APIRouter()
 
@@ -72,15 +74,16 @@ async def reload_csv(
     tenant: str = Query(
         ...,
         description="Target tenant. If no file is provided, available tenants are: `movies`, `tv_serials`, `trending`",
-        example="trending",
+        examples="trending",
     ),
     file: Optional[UploadFile] = File(
         None,
         description="Optional CSV file. If omitted, the system reloads data for the specified tenant."
     ),
     service: MovieService = Depends(get_movie_service),
+    current_user: User = Depends(get_current_user),
 ):
-    """Reload movies from CSV file for a specific tenant."""
+    """Reload movies from CSV file for a specific tenant. Requires authentication."""
     # Check if tenant exists (for file upload case)
     if file is not None:
         # Parse uploaded file

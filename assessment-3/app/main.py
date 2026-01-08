@@ -4,6 +4,7 @@ import time
 import logging
 
 from app.api.movies import router as movies_router
+from app.api.auth import router as auth_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("assessment-3")
@@ -34,4 +35,5 @@ async def timing_middleware(request: Request, call_next):
 
 
 # Include API routers
+app.include_router(auth_router)
 app.include_router(movies_router)
