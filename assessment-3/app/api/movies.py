@@ -41,15 +41,16 @@ async def get_movies(
     limit: Optional[int] = Query(None, ge=1),
     genre: Optional[str] = None,
     year: Optional[int] = None,
+    search: Optional[str] = Query(None, description="Search by movie name, original title, or overview"),
     tenant: str = Depends(get_tenant_from_request),
     service: MovieService = Depends(get_movie_service),
 ):
-    """Get movies with optional filters."""
+    """Get movies with optional filters and search."""
     # Check if tenant exists
     if not await service.tenant_exists(tenant):
         raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant}")
 
-    movies = await service.get_movies(tenant, limit, genre, year)
+    movies = await service.get_movies(tenant, limit, genre, year, search)
     return movies
 
 

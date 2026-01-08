@@ -19,9 +19,10 @@ class MovieService:
         limit: Optional[int] = None,
         genre: Optional[str] = None,
         year: Optional[int] = None,
+        search: Optional[str] = None,
     ) -> List[dict]:
-        """Get movies with optional filters, returning dicts for JSON serialization."""
-        movies = await self.repo.get_movies(tenant, limit, genre, year)
+        """Get movies with optional filters and search, returning dicts for JSON serialization."""
+        movies = await self.repo.get_movies(tenant, limit, genre, year, search)
         return [movie.__dict__ for movie in movies]
 
     async def get_movie_by_tmdb_id(self, tenant: str, tmdb_id: str) -> Optional[dict]:

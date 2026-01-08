@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Movie
@@ -59,8 +59,9 @@ class MovieRepository:
         limit: Optional[int] = None,
         genre: Optional[str] = None,
         year: Optional[int] = None,
+        search: Optional[str] = None,
     ) -> List[MovieDTO]:
-        """Get movies for a tenant with optional filters."""
+        """Get movies for a tenant with optional filters and search."""
         query = select(Movie).where(Movie.tenant == tenant)
 
         # Apply JSONB filters
@@ -71,6 +72,17 @@ class MovieRepository:
         if year:
             query = query.where(
                 Movie.data["year"].astext == str(year)
+            )
+
+        # Apply search filter (case-insensitive search in movie_name, original_title, and genre)
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    Movie.data["movie_name"].astext.ilike(search_pattern),
+                    Movie.data["original_title"].astext.ilike(search_pattern),
+                    Movie.data["overview"].astext.ilike(search_pattern),
+                )
             )
 
         if limit:
