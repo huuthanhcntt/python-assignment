@@ -1,3 +1,7 @@
 export { Header } from './Header';
 export { Footer } from './Footer';
 export { Layout } from './Layout';
+export { SearchBar } from './SearchBar';
+export { MovieCard } from './MovieCard';
+export { MovieList } from './MovieList';
+export { ErrorBoundary } from './ErrorBoundary';

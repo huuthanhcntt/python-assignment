@@ -5,10 +5,11 @@
 .app-container h2 {
   color: #2d3748;
   font-size: 2rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
-.app-container p {
+.app-subtitle {
   color: #718096;
   font-size: 1.1rem;
+  margin-bottom: 2rem;
 }
