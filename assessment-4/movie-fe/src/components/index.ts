@@ -6,3 +6,6 @@ export { MovieCard } from './MovieCard';
 export { MovieList } from './MovieList';
 export { ErrorBoundary } from './ErrorBoundary';
 export { FilterBar } from './FilterBar';
+
+// Admin components
+export { AdminLogin, AdminDashboard, ProtectedRoute, LoginRedirect } from './admin';

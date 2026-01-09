@@ -8,6 +8,11 @@ export interface GetMoviesParams {
   search?: string;
 }
 
+export interface ReloadResponse {
+  loaded: number;
+  tenant: string;
+}
+
 export const moviesApi = {
   // Get movies with optional filters
   getMovies: async (params?: GetMoviesParams): Promise<Movie[]> => {
@@ -31,6 +36,26 @@ export const moviesApi = {
   getCategories: async (maxLevel?: number): Promise<Category[]> => {
     const params = maxLevel !== undefined ? { max_level: maxLevel } : {};
     const response = await apiClient.get<Category[]>('/categories', { params });
+    return response.data;
+  },
+
+  // Reload movies from CSV file (requires authentication)
+  reloadMovies: async (tenant: string, file?: File): Promise<ReloadResponse> => {
+    const formData = new FormData();
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    const response = await apiClient.post<ReloadResponse>(
+      `/reload?tenant=${tenant}`,
+      file ? formData : null,
+      {
+        headers: file ? {
+          'Content-Type': 'multipart/form-data',
+        } : undefined,
+      }
+    );
     return response.data;
   },
 };

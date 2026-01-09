@@ -9,12 +9,26 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor for adding tenant header
+// Request interceptor for adding tenant and auth headers
 apiClient.interceptors.request.use(
   (config) => {
-    // You can add tenant from localStorage or context here
+    // Add tenant header
     const tenant = localStorage.getItem('tenant') || 'trending';
     config.headers['X-Tenant'] = tenant;
+
+    // Add auth token if available
+    const authData = localStorage.getItem('auth-storage');
+    if (authData) {
+      try {
+        const { state } = JSON.parse(authData);
+        if (state?.token) {
+          config.headers['Authorization'] = `Bearer ${state.token}`;
+        }
+      } catch (error) {
+        console.error('Error parsing auth data:', error);
+      }
+    }
+
     return config;
   },
   (error) => {
