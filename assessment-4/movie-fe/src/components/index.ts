@@ -4,6 +4,7 @@ export { Layout } from './Layout';
 export { SearchBar } from './SearchBar';
 export { MovieCard } from './MovieCard';
 export { MovieList } from './MovieList';
+export { MovieDetail } from './MovieDetail';
 export { ErrorBoundary } from './ErrorBoundary';
 export { FilterBar } from './FilterBar';
 

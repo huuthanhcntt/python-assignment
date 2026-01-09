@@ -4,6 +4,7 @@ import {
   SearchBar,
   FilterBar,
   MovieList,
+  MovieDetail,
   ErrorBoundary,
   AdminDashboard,
   ProtectedRoute,
@@ -79,6 +80,16 @@ function App() {
             element={
               <TenantProvider>
                 <MovieBrowser />
+              </TenantProvider>
+            }
+          />
+
+          {/* Movie detail route */}
+          <Route
+            path="/:tenant/movie/:tmdbId"
+            element={
+              <TenantProvider>
+                <MovieDetail />
               </TenantProvider>
             }
           />

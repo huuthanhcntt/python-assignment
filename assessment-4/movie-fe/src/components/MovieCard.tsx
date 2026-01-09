@@ -1,3 +1,4 @@
+import { Link, useParams } from 'react-router-dom';
 import type { Movie } from '../types/movie';
 import './MovieCard.css';
 
@@ -6,8 +7,11 @@ interface MovieCardProps {
 }
 
 export const MovieCard = ({ movie }: MovieCardProps) => {
+  const { tenant } = useParams<{ tenant: string }>();
+  const tenantSlug = tenant || 'trending';
+
   return (
-    <div className="movie-card">
+    <Link to={`/${tenantSlug}/movie/${movie.tmdb_id}`} className="movie-card">
       <div className="movie-poster-wrapper">
         {movie.poster_url ? (
           <img
@@ -46,6 +50,6 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
         </div>
         <p className="movie-overview">{movie.overview}</p>
       </div>
-    </div>
+    </Link>
   );
 };
