@@ -11,9 +11,13 @@ import {
 } from './components';
 import { useMovies } from './hooks';
 import { useMovieStore } from './store';
+import { TenantProvider, useTenant } from './contexts/TenantContext';
 import './App.css';
 
 function MovieBrowser() {
+  // Get current tenant from context
+  const { tenant } = useTenant();
+
   // Get state and actions from Zustand store
   const searchTerm = useMovieStore((state) => state.searchTerm);
   const filters = useMovieStore((state) => state.filters);
@@ -29,10 +33,16 @@ function MovieBrowser() {
     setSearchTerm(term);
   };
 
+  // Format tenant name: replace underscores with spaces and capitalize each word
+  const formattedTenant = tenant
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
   return (
     <Layout>
       <div className="app-container">
-        <h2>Browse Movies</h2>
+        <h2>Browse Movies - {formattedTenant}</h2>
         <p className="app-subtitle">
           Search and explore our collection of movies
         </p>
@@ -60,8 +70,18 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <Routes>
-          {/* Public movie browsing route */}
-          <Route path="/" element={<MovieBrowser />} />
+          {/* Redirect root to default tenant */}
+          <Route path="/" element={<Navigate to="/trending" replace />} />
+
+          {/* Tenant-based movie browsing route */}
+          <Route
+            path="/:tenant"
+            element={
+              <TenantProvider>
+                <MovieBrowser />
+              </TenantProvider>
+            }
+          />
 
           {/* Admin routes */}
           <Route path="/admin/login" element={<LoginRedirect />} />
@@ -78,8 +98,8 @@ function App() {
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
 
-          {/* Redirect unknown routes to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Redirect unknown routes to trending */}
+          <Route path="*" element={<Navigate to="/trending" replace />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
